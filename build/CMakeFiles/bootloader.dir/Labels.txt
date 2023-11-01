@@ -1,0 +1,13 @@
+# Target labels
+ bootloader
+# Source files and their labels
+/home/plukacs/Documents/Szakdoga/BH1750-first/build/CMakeFiles/bootloader
+/home/plukacs/Documents/Szakdoga/BH1750-first/build/CMakeFiles/bootloader.rule
+/home/plukacs/Documents/Szakdoga/BH1750-first/build/CMakeFiles/bootloader-complete.rule
+/home/plukacs/Documents/Szakdoga/BH1750-first/build/bootloader-prefix/src/bootloader-stamp/bootloader-build.rule
+/home/plukacs/Documents/Szakdoga/BH1750-first/build/bootloader-prefix/src/bootloader-stamp/bootloader-configure.rule
+/home/plukacs/Documents/Szakdoga/BH1750-first/build/bootloader-prefix/src/bootloader-stamp/bootloader-download.rule
+/home/plukacs/Documents/Szakdoga/BH1750-first/build/bootloader-prefix/src/bootloader-stamp/bootloader-install.rule
+/home/plukacs/Documents/Szakdoga/BH1750-first/build/bootloader-prefix/src/bootloader-stamp/bootloader-mkdir.rule
+/home/plukacs/Documents/Szakdoga/BH1750-first/build/bootloader-prefix/src/bootloader-stamp/bootloader-patch.rule
+/home/plukacs/Documents/Szakdoga/BH1750-first/build/bootloader-prefix/src/bootloader-stamp/bootloader-update.rule
