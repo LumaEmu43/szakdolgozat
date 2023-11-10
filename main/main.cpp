@@ -86,10 +86,9 @@ int iso_array[ISO_N] = {12, 16, 20, 25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 
 
 void init()
 {
-    esp_wifi_stop();
-
     Wire.setPins(0, 1);
     Wire.begin();
+
     lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE_2);
 
     lcd.begin(16, 2);
@@ -119,11 +118,11 @@ void make_measurement(bool init)
                 }
             }
 
-            printf("Current LUX value: %ld; ", lux);
-            printf("Current film speed: %d; ", iso_array[25]);
-            printf("Current f-stop: %f; ", aperture_array[4]);
-            printf("Calculated shutter speed is: 1/%d; ", shutter_speed_calculated);
-            printf("Exposure Value is: %d\n", exposure_value);
+            printf("LUX: %ld; ", lux);
+            printf("Speed: %d; ", iso_array[25]);
+            printf("F: %f; ", aperture_array[4]);
+            printf("Shutter: 1/%d; ", shutter_speed_calculated);
+            printf("EV: %d\n", exposure_value);
 
             wait = 0;
 
@@ -149,7 +148,6 @@ void go_to_sleep(uint16_t sleep)
 
 void app_main(void)
 {
-    
     init();
     make_measurement(true);
     
