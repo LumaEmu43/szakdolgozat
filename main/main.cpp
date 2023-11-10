@@ -78,7 +78,7 @@ LiquidCrystal lcd(2, 3, 8, 5, 6, 7);    //LCD initialization (might change later
 long lux = 0.0;    //Measured LUX value
 int8_t exposure_value = 0;
 uint64_t wait = 0;
-uint16_t shutter_speed_calculated = 0;
+int16_t shutter_speed_calculated = 0;
 
 double aperture_array[APERTURE_N] = {1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32, 38, 45, 54, 64};
 double shutter_speed_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
@@ -105,7 +105,7 @@ void make_measurement(bool init)
     if(digitalRead(BTN_MEASURE) | init)
         {
             lux = lightMeter.readLightLevel();
-            exposure_value = log10(lux * iso_array[9] / INCIDENT_CALIBRATION) / log10(2);
+            exposure_value = log10(lux * iso_array[25] / INCIDENT_CALIBRATION) / log10(2);
             shutter_speed_calculated = (pow(2, exposure_value) / pow(aperture_array[4], 2));
 
             for (int i = 0; i < (sizeof(shutter_speed_array) / sizeof(double)) - 1; i++) {
@@ -120,10 +120,12 @@ void make_measurement(bool init)
             }
 
             printf("Current LUX value: %ld; ", lux);
-            printf("Current film speed: %d; ", iso_array[9]);
+            printf("Current film speed: %d; ", iso_array[25]);
             printf("Current f-stop: %f; ", aperture_array[4]);
             printf("Calculated shutter speed is: 1/%d; ", shutter_speed_calculated);
             printf("Exposure Value is: %d\n", exposure_value);
+
+            wait = 0;
 
             delay(100);
 
