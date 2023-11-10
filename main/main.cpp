@@ -65,8 +65,8 @@ extern "C"
 //Defining constants
 #define APERTURE_N 23     //Number of full and half F-stops
 #define ISO_N 26        //Number of most common ISO/ASA values
-#define SHUTTER_N 14    //Number of possible shutter speeds
-#define INCIDENT_CALIBRATION 330    // Calibration constant (C) for incident light meters, see https://en.wikipedia.org/wiki/Light_meter#Calibration_constants
+#define SHUTTER_N 19    //Number of possible shutter speeds
+#define INCIDENT_CALIBRATION 330    //330 Calibration constant (C) for incident light meters, see https://en.wikipedia.org/wiki/Light_meter#Calibration_constants
 #define BTN_MEASURE 4
 
 
@@ -75,18 +75,17 @@ BH1750 lightMeter;      //Light meter sensor using the BH1750 library (might cha
 LiquidCrystal lcd(2, 3, 8, 5, 6, 7);    //LCD initialization (might change later due to I2C)
 
 //Defining variables
-long lux = 0;    //Measured LUX value
-int8_t exposure_value;
-float shutter_speed_calculated;
+long lux = 0.0;    //Measured LUX value
+int8_t exposure_value = 0;
+uint64_t wait = 0;
+uint16_t shutter_speed_calculated = 0;
 
 double aperture_array[APERTURE_N] = {1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32, 38, 45, 54, 64};
-float shutter_speed_array[SHUTTER_N] = {1, 1/2.0, 1/4.0, 1/8.0, 1/15.0, 1/30.0, 1/60.0, 1/125.0, 1/250.0, 1/500.0, 1/1000.0, 1/2000.0, 1/4000.0, 1/8000.0};
+double shutter_speed_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
 int iso_array[ISO_N] = {12, 16, 20, 25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200, 6400};
 
-void app_main(void)
+void init()
 {
-    //esp_bluedroid_disable();
-    //esp_bt_controller_disable();
     esp_wifi_stop();
 
     Wire.setPins(0, 1);
@@ -94,45 +93,71 @@ void app_main(void)
     lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE_2);
 
     lcd.begin(16, 2);
-    lcd.print("LUX value:");
+    lcd.print("Shutter:");
 
-    esp_deep_sleep_enable_gpio_wakeup(1 << BTN_MEASURE,
-    ESP_GPIO_WAKEUP_GPIO_HIGH);
-    //digitalWrite(18,HIGH);
+    esp_deep_sleep_enable_gpio_wakeup(1 << BTN_MEASURE, ESP_GPIO_WAKEUP_GPIO_HIGH);
 
     pinMode(BTN_MEASURE, INPUT);
-    
-    lcd.setCursor(0, 1);
-    lcd.print(lux);
-    
+}
 
-
-    while(1)
-    {
-        if(digitalRead(BTN_MEASURE))
+void make_measurement(bool init)
+{
+    if(digitalRead(BTN_MEASURE) | init)
         {
             lux = lightMeter.readLightLevel();
             exposure_value = log10(lux * iso_array[9] / INCIDENT_CALIBRATION) / log10(2);
             shutter_speed_calculated = (pow(2, exposure_value) / pow(aperture_array[4], 2));
 
+            for (int i = 0; i < (sizeof(shutter_speed_array) / sizeof(double)) - 1; i++) {
+                if (shutter_speed_calculated >= shutter_speed_array[i] && shutter_speed_calculated <= shutter_speed_array[i + 1]) {
+                if (abs(shutter_speed_calculated - shutter_speed_array[i]) <= abs(shutter_speed_calculated) - shutter_speed_array[i + 1]) {
+                    shutter_speed_calculated = shutter_speed_array[i];
+                } else {
+                    shutter_speed_calculated = shutter_speed_array[i + 1];
+                }
+                break;
+                }
+            }
+
             printf("Current LUX value: %ld; ", lux);
             printf("Current film speed: %d; ", iso_array[9]);
             printf("Current f-stop: %f; ", aperture_array[4]);
-            printf("Calculated shutter speed: %f; ", shutter_speed_calculated);
+            printf("Calculated shutter speed is: 1/%d; ", shutter_speed_calculated);
             printf("Exposure Value is: %d\n", exposure_value);
 
+            delay(100);
+
             lcd.setCursor(0, 1);
-            lcd.print(lux);
+            lcd.print("1/" + String(shutter_speed_calculated));
 
             delay(500);
         }
-        delay(100);
+}
+
+void go_to_sleep(uint16_t sleep)
+{
+    wait++;
+    if(wait >= sleep)
+    {
         printf("Going to sleep...\n");
-        //delay(1000);
+        delay(50);
         esp_deep_sleep_start();
     }
 }
 
+void app_main(void)
+{
+    
+    init();
+    make_measurement(true);
+    
+    while(1)
+    {
+        make_measurement(false);
+        delay(100);
+        go_to_sleep(600);
+    }
+}
 
 /*
 Formulas to calculate values:
