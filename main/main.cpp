@@ -219,13 +219,13 @@ extern "C"
 Adafruit_VEML7700 g_veml = Adafruit_VEML7700();
 uint16_t g_lux = 0U;
 uint8_t g_btn_measure_state = 0U;
-uint8_t exposure_value = 0U;
+int8_t exposure_value = 0U;
 int16_t shutter_speed_calculated = 0U;
 uint8_t set_aperture = 0U;
 uint8_t set_iso = 0U;
 
 double aperture_array[APERTURE_N] = {1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32, 38, 45, 54, 64};
-double shutter_speed_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
+int16_t shutter_speed_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
 uint16_t iso_array[ISO_N] = {12, 16, 20, 25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200, 6400};
 
 void init()
@@ -265,13 +265,12 @@ void make_measurement(uint8_t iso_setting, uint8_t aperture_setting)
     g_lux = g_veml.readLux(VEML_LUX_CORRECTED);
     printf("LUX: %d\n", g_lux);
 
-    //lux = lightMeter.readLightLevel();
     exposure_value = log10(g_lux * iso_array[iso_setting] / INCIDENT_CALIBRATION) / log10(2);
     printf("EV: %d\n", exposure_value);
 
     shutter_speed_calculated = (pow(2, exposure_value) / pow(aperture_array[aperture_setting], 2));
 
-    for (int i = 0; i < (sizeof(shutter_speed_array) / sizeof(double)) - 1; i++) {
+    for (int i = 0; i < SHUTTER_N; i++) {
         
         if (shutter_speed_calculated >= shutter_speed_array[i] && shutter_speed_calculated <= shutter_speed_array[i + 1]) 
         {
@@ -312,3 +311,9 @@ void app_main(void)
         delay(10);
     }
 }
+
+/*
+TO DO:
+2 nyomógombot berakni h lehessen állítani az iso-t és az aperturet :D
+hestore várom a rendelést
+*/
