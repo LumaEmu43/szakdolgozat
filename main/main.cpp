@@ -207,6 +207,8 @@ extern "C"
 
 //Defining values
 #define BTN_MEASURE 4
+#define BTN_PLUS    2
+#define BTN_MINUS   3
 #define SDA 1
 #define SCL 0
 #define APERTURE_N 23
@@ -218,6 +220,8 @@ extern "C"
 Adafruit_VEML7700 g_veml = Adafruit_VEML7700();
 uint16_t g_lux = 0U;
 uint8_t g_btn_measure_state = 0U;
+uint8_t g_btn_plus_state = 0U;
+uint8_t g_btn_minus_state = 0U;
 int8_t exposure_value = 0U;
 int16_t shutter_speed_calculated = 0U;
 uint8_t set_aperture = 0U;
@@ -231,8 +235,10 @@ void init()
 {
     printf("Up and running!\n");
 
-    printf("Setting up measure button to: %d\n", BTN_MEASURE);
+    printf("Measure button: %d, Plus button: %d, Minus button: %d\n", BTN_MEASURE, BTN_PLUS, BTN_MINUS);
     pinMode(BTN_MEASURE, INPUT);
+    pinMode(BTN_PLUS, INPUT);
+    pinMode(BTN_MINUS, INPUT);
 
     printf("Setting up the SDA: %d, and the SCL: %d pins.\n", SDA, SCL);
     Wire.begin(1, 0);
@@ -249,6 +255,28 @@ void init()
 void read_btns()
 {
     g_btn_measure_state = digitalRead(BTN_MEASURE);
+    g_btn_plus_state = digitalRead(BTN_PLUS);
+    g_btn_minus_state = digitalRead(BTN_MINUS);
+
+    if(g_btn_plus_state)
+    {
+        set_iso++;
+
+        if(set_iso > ISO_N - 1)
+        {
+            set_iso = 25;
+        }
+    }
+
+    if(g_btn_minus_state)
+    {
+        set_iso--;
+
+        if(set_iso <= 0)
+        {
+            set_iso = 0;
+        }
+    }
 }
 
 void make_measurement(uint8_t iso_setting, uint8_t aperture_setting)
@@ -304,7 +332,7 @@ void app_main(void)
 
         if(g_btn_measure_state)
         {
-            make_measurement(10, 7);
+            make_measurement(set_iso, set_aperture);
             delay(300);
         }
         delay(10);
@@ -315,4 +343,5 @@ void app_main(void)
 TO DO:
 2 nyomógombot berakni h lehessen állítani az iso-t és az aperturet :D
 hestore várom a rendelést
+iso set overflow fix!!!! a button measure funkcioban
 */
