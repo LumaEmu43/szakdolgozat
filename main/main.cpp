@@ -182,7 +182,6 @@ NOTE* Mikrokapcsolok hestorebol - kis sapkákkal kitben pcb-vel stb...
 #include "esp32-hal-gpio.h"
 #include "esp_err.h"
 #include "hal/gpio_types.h"
-#include <Adafruit_PCD8544.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <sys/_stdint.h>
