@@ -224,8 +224,8 @@ uint8_t g_btn_plus_state = 0U;
 uint8_t g_btn_minus_state = 0U;
 int8_t exposure_value = 0U;
 int16_t shutter_speed_calculated = 0U;
-uint8_t set_aperture = 0U;
-uint8_t set_iso = 0U;
+uint8_t set_aperture = 6U;
+uint8_t set_iso = 9U;
 
 double aperture_array[APERTURE_N] = {1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32, 38, 45, 54, 64};
 int16_t shutter_speed_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
@@ -236,9 +236,9 @@ void init()
     printf("Up and running!\n");
 
     printf("Measure button: %d, Plus button: %d, Minus button: %d\n", BTN_MEASURE, BTN_PLUS, BTN_MINUS);
-    pinMode(BTN_MEASURE, INPUT);
-    pinMode(BTN_PLUS, INPUT);
-    pinMode(BTN_MINUS, INPUT);
+    pinMode(BTN_MEASURE, INPUT_PULLDOWN);
+    pinMode(BTN_PLUS, INPUT_PULLDOWN);
+    pinMode(BTN_MINUS, INPUT_PULLDOWN);
 
     printf("Setting up the SDA: %d, and the SCL: %d pins.\n", SDA, SCL);
     Wire.begin(1, 0);
@@ -257,25 +257,22 @@ void read_btns()
     g_btn_measure_state = digitalRead(BTN_MEASURE);
     g_btn_plus_state = digitalRead(BTN_PLUS);
     g_btn_minus_state = digitalRead(BTN_MINUS);
+}
 
-    if(g_btn_plus_state)
+void settings()
+{
+    if(g_btn_plus_state && set_iso < ISO_N - 1)
     {
         set_iso++;
-
-        if(set_iso > ISO_N - 1)
-        {
-            set_iso = 25;
-        }
+        printf("ISO: %d\n", set_iso);
+        delay(200);
     }
 
-    if(g_btn_minus_state)
+    if(g_btn_minus_state && set_iso > 0)
     {
         set_iso--;
-
-        if(set_iso <= 0)
-        {
-            set_iso = 0;
-        }
+        printf("ISO: %d\n", set_iso);
+        delay(200);
     }
 }
 
@@ -318,7 +315,7 @@ void make_measurement(uint8_t iso_setting, uint8_t aperture_setting)
     }
     printf("Shutter: 1/%d\n", shutter_speed_calculated);
     printf("----------\n");
-    delay(50);
+    delay(100);
 }
 
 void app_main(void)
@@ -329,11 +326,10 @@ void app_main(void)
     while(1)
     {
         read_btns();
-
+        settings();
         if(g_btn_measure_state)
         {
             make_measurement(set_iso, set_aperture);
-            delay(300);
         }
         delay(10);
     }
