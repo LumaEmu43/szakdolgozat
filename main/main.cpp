@@ -224,17 +224,17 @@ extern "C"
 Adafruit_VEML7700 g_veml = Adafruit_VEML7700();
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-uint16_t g_lux = 0U;
+long g_lux = 0U;
 uint8_t g_btn_measure_state = 0U;
 uint8_t g_btn_plus_state = 0U;
 uint8_t g_btn_minus_state = 0U;
-int8_t exposure_value = 0U;
-int16_t shutter_speed_calculated = 0U;
+int16_t exposure_value = 0U;
+double shutter_speed_calculated = 0U;
 uint8_t set_aperture = 6U;
 uint8_t set_iso = 9U;
 
 double aperture_array[APERTURE_N] = {1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32, 38, 45, 54, 64};
-int16_t shutter_speed_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
+double shutter_speed_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
 uint16_t iso_array[ISO_N] = {12, 16, 20, 25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200, 6400};
 
 void init()
@@ -258,10 +258,16 @@ void init()
     printf("SSD1306 allocation failed");
     while(1);
     }
-    
+
     display.clearDisplay();
 
     printf("All set up and done!\n");
+
+    for (int i = 0; i < SHUTTER_N; i++) {
+      if (shutter_speed_array[i] < 0) {
+        shutter_speed_array[i] = 1 / abs(shutter_speed_array[i]);
+      }
+    }
 
 }
 
@@ -291,16 +297,12 @@ void settings()
 
 void make_measurement(uint8_t iso_setting, uint8_t aperture_setting)
 {
-    printf("----------\n");
-
-    printf("MEASUREMENT DONE:\n");
-
     printf("ISO: %d\n", iso_array[iso_setting]);
 
     printf("Aperture: %f\n", aperture_array[aperture_setting]);
 
     g_lux = g_veml.readLux(VEML_LUX_CORRECTED);
-    printf("LUX: %d\n", g_lux);
+    printf("LUX: %ld\n", g_lux);
 
     exposure_value = log10(g_lux * iso_array[iso_setting] / INCIDENT_CALIBRATION) / log10(2);
     printf("EV: %d\n", exposure_value);
@@ -326,8 +328,14 @@ void make_measurement(uint8_t iso_setting, uint8_t aperture_setting)
         
         }
     }
-    printf("Shutter: 1/%d\n", shutter_speed_calculated);
-    printf("----------\n");
+    if(shutter_speed_calculated > 1)
+    {
+        printf("Shutter: 1/%f\n", shutter_speed_calculated);
+    }
+    else 
+    {
+        printf("Shutter: %f\n",  1 / shutter_speed_calculated);
+    }
     delay(100);
 }
 
@@ -356,8 +364,19 @@ void sample_text()
     display.setCursor(43,0);
     display.print("Shutter");
     display.setCursor(43,16);
-    display.print("1/");
-    display.print(shutter_speed_calculated);
+    if(shutter_speed_calculated > 1)
+    {
+        display.print("1/");
+        display.print(static_cast<int>(shutter_speed_calculated));
+        display.setTextSize(1);
+        display.print("s");
+    }
+    else 
+    {
+        display.print(static_cast<int>(1 / shutter_speed_calculated));
+        display.setTextSize(1);
+        display.print("s");
+    }
 
     display.display();
     delay(100);  // Pause for 2 seconds
