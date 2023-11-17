@@ -178,6 +178,7 @@ NOTE* Potential display Grafikus LCD kijelző 84x48 - Nokia 5110
 NOTE* Mikrokapcsolok hestorebol - kis sapkákkal kitben pcb-vel stb...
 */
 
+#include "Arduino.h"
 #include "Print.h"
 #include "esp32-hal-gpio.h"
 #include "esp_err.h"
@@ -188,6 +189,7 @@ NOTE* Mikrokapcsolok hestorebol - kis sapkákkal kitben pcb-vel stb...
 #include <SPI.h>
 #include <Adafruit_VEML7700.h>
 #include <pins_arduino.h>
+#include <Adafruit_SSD1306.h>
 
 extern "C"
 {
@@ -215,9 +217,13 @@ extern "C"
 #define SHUTTER_N 19
 #define ISO_N 26
 #define INCIDENT_CALIBRATION 330
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 32 // OLED display height, in pixels
 
 //Variables
 Adafruit_VEML7700 g_veml = Adafruit_VEML7700();
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
 uint16_t g_lux = 0U;
 uint8_t g_btn_measure_state = 0U;
 uint8_t g_btn_plus_state = 0U;
@@ -318,15 +324,60 @@ void make_measurement(uint8_t iso_setting, uint8_t aperture_setting)
     delay(100);
 }
 
+void sample_text()
+{
+    display.setTextSize(1);
+    display.setTextColor(SSD1306_WHITE);
+
+    display.setCursor(0,0);
+    display.print("I:");
+    display.print(iso_array[set_iso]);
+
+    display.setCursor(0,8);
+    display.print("F:");
+    display.print(aperture_array[set_aperture]);
+
+    display.setCursor(0,16);
+    display.print("L:");
+    display.print(g_lux);
+
+    display.setCursor(0,24);
+    display.print("E:");
+    display.print(exposure_value);
+
+    display.setTextSize(2);
+    display.setCursor(43,0);
+    display.print("Shutter");
+    display.setCursor(43,16);
+    display.print("1/");
+    display.print(shutter_speed_calculated);
+
+    display.display();
+    delay(100);  // Pause for 2 seconds
+    display.clearDisplay();  // Clear the buffer
+}
+
 void app_main(void)
 {
     init();
     read_btns();
+    if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+    }
+
+   // Show initial display buffer contents on the screen --
+  // the library initializes this with an Adafruit splash screen.
+  display.display();
+  delay(2000); // Pause for 2 seconds
+  // Clear the buffer
+  display.clearDisplay();
 
     while(1)
     {
         read_btns();
         settings();
+        sample_text();
         if(g_btn_measure_state)
         {
             make_measurement(set_iso, set_aperture);
