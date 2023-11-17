@@ -254,6 +254,13 @@ void init()
     g_veml.setGain(VEML7700_GAIN_1_8);
     g_veml.setIntegrationTime(VEML7700_IT_25MS);
 
+    if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
+    printf("SSD1306 allocation failed");
+    while(1);
+    }
+    
+    display.clearDisplay();
+
     printf("All set up and done!\n");
 
 }
@@ -361,17 +368,6 @@ void app_main(void)
 {
     init();
     read_btns();
-    if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
-    Serial.println(F("SSD1306 allocation failed"));
-    for(;;); // Don't proceed, loop forever
-    }
-
-   // Show initial display buffer contents on the screen --
-  // the library initializes this with an Adafruit splash screen.
-  display.display();
-  delay(2000); // Pause for 2 seconds
-  // Clear the buffer
-  display.clearDisplay();
 
     while(1)
     {

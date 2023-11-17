@@ -1,7 +1,7 @@
 {
     "version":            "1",
     "project_name":       "BH1750-first",
-    "project_version":    "f07e764-dirty",
+    "project_version":    "0fc93e3-dirty",
     "project_path":       "/home/plukacs/Documents/Szakdoga/BH1750-first",
     "idf_path":           "/home/plukacs/esp/esp-idf",
     "build_dir":          "/home/plukacs/Documents/Szakdoga/BH1750-first/build",
