@@ -50,13 +50,13 @@ https://learn.adafruit.com/adafruit-veml7700/adjusting-for-different-light-level
 
 //Defining variables
 //long lux = 0.0;    //Measured LUX value
-//int8_t exposure_value = 0;
+//int8_t ev = 0;
 //uint64_t wait = 0;
-//int16_t shutter_speed_calculated = 0;
+//int16_t shutter_calc = 0;
 //int rotate = 1;
 //
 //double aperture_array[APERTURE_N] = {1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32, 38, 45, 54, 64};
-//double shutter_speed_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
+//double shutter_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
 //int iso_array[ISO_N] = {12, 16, 20, 25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200, 6400};
 
 //void init()
@@ -79,15 +79,15 @@ https://learn.adafruit.com/adafruit-veml7700/adjusting-for-different-light-level
 //    if(digitalRead(BTN_MEASURE) | init)
 //        {
 //            //lux = lightMeter.readLightLevel();
-//            exposure_value = log10(lux * iso_array[25] / INCIDENT_CALIBRATION) / log10(2);
-//            shutter_speed_calculated = (pow(2, exposure_value) / pow(aperture_array[4], 2));
+//            ev = log10(lux * iso_array[25] / INCIDENT_CALIBRATION) / log10(2);
+//            shutter_calc = (pow(2, ev) / pow(aperture_array[4], 2));
 //
-//            for (int i = 0; i < (sizeof(shutter_speed_array) / sizeof(double)) - 1; i++) {
-//                if (shutter_speed_calculated >= shutter_speed_array[i] && shutter_speed_calculated <= shutter_speed_array[i + 1]) {
-//                if (abs(shutter_speed_calculated - shutter_speed_array[i]) <= abs(shutter_speed_calculated) - shutter_speed_array[i + 1]) {
-//                    shutter_speed_calculated = shutter_speed_array[i];
+//            for (int i = 0; i < (sizeof(shutter_array) / sizeof(double)) - 1; i++) {
+//                if (shutter_calc >= shutter_array[i] && shutter_calc <= shutter_array[i + 1]) {
+//                if (abs(shutter_calc - shutter_array[i]) <= abs(shutter_calc) - shutter_array[i + 1]) {
+//                    shutter_calc = shutter_array[i];
 //                } else {
-//                    shutter_speed_calculated = shutter_speed_array[i + 1];
+//                    shutter_calc = shutter_array[i + 1];
 //                }
 //                break;
 //                }
@@ -96,15 +96,15 @@ https://learn.adafruit.com/adafruit-veml7700/adjusting-for-different-light-level
 //            printf("LUX: %ld; ", lux);
 //            printf("Speed: %d; ", iso_array[25]);
 //            printf("F: %f; ", aperture_array[4]);
-//            printf("Shutter: 1/%d; ", shutter_speed_calculated);
-//            printf("EV: %d\n", exposure_value);
+//            printf("Shutter: 1/%d; ", shutter_calc);
+//            printf("EV: %d\n", ev);
 //
 //            wait = 0;
 //
 //            delay(100);
 //
 //            //lcd.setCursor(0, 1);
-//            //lcd.print("1/" + String(shutter_speed_calculated));
+//            //lcd.print("1/" + String(shutter_calc));
 //
 //            delay(500);
 //        }
@@ -181,6 +181,7 @@ NOTE* Mikrokapcsolok hestorebol - kis sapkákkal kitben pcb-vel stb...
 #include "Arduino.h"
 #include "Print.h"
 #include "esp32-hal-gpio.h"
+#include "esp_attr.h"
 #include "esp_err.h"
 #include "hal/gpio_types.h"
 #include <Wire.h>
@@ -217,24 +218,25 @@ extern "C"
 #define SHUTTER_N 19
 #define ISO_N 26
 #define INCIDENT_CALIBRATION 330
-#define SCREEN_WIDTH 128 // OLED display width, in pixels
-#define SCREEN_HEIGHT 32 // OLED display height, in pixels
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 32
 
 //Variables
-Adafruit_VEML7700 g_veml = Adafruit_VEML7700();
+Adafruit_VEML7700 veml = Adafruit_VEML7700();
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
-long g_lux = 0U;
+long lux = 0U;
 uint8_t g_btn_measure_state = 0U;
 uint8_t g_btn_plus_state = 0U;
 uint8_t g_btn_minus_state = 0U;
-int16_t exposure_value = 0U;
-double shutter_speed_calculated = 0U;
-uint8_t set_aperture = 6U;
-uint8_t set_iso = 9U;
+int16_t ev = 0U;
+double shutter_calc = 0U;
+RTC_DATA_ATTR uint8_t aperture_index = 6U;
+RTC_DATA_ATTR uint8_t iso_index = 9U;
+uint64_t sleep_counter = 0U;
 
 double aperture_array[APERTURE_N] = {1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32, 38, 45, 54, 64};
-double shutter_speed_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
+double shutter_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
 uint16_t iso_array[ISO_N] = {12, 16, 20, 25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200, 6400};
 
 void init()
@@ -250,9 +252,9 @@ void init()
     Wire.begin(1, 0);
 
     printf("Setting up the VEML7700 sensor with 1/8 gain and 25ms integration time.\n");
-    g_veml.begin();
-    g_veml.setGain(VEML7700_GAIN_1_8);
-    g_veml.setIntegrationTime(VEML7700_IT_25MS);
+    veml.begin();
+    veml.setGain(VEML7700_GAIN_1_8);
+    veml.setIntegrationTime(VEML7700_IT_25MS);
 
     if(!display.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { 
     printf("SSD1306 allocation failed");
@@ -263,9 +265,11 @@ void init()
 
     printf("All set up and done!\n");
 
+    esp_deep_sleep_enable_gpio_wakeup(1 << BTN_MEASURE, ESP_GPIO_WAKEUP_GPIO_HIGH);
+
     for (int i = 0; i < SHUTTER_N; i++) {
-      if (shutter_speed_array[i] < 0) {
-        shutter_speed_array[i] = 1 / abs(shutter_speed_array[i]);
+      if (shutter_array[i] < 0) {
+        shutter_array[i] = 1 / abs(shutter_array[i]);
       }
     }
 
@@ -280,17 +284,19 @@ void read_btns()
 
 void settings()
 {
-    if(g_btn_plus_state && set_iso < ISO_N - 1)
+    if(g_btn_plus_state && iso_index < ISO_N - 1)
     {
-        set_iso++;
-        printf("ISO: %d\n", set_iso);
+        iso_index++;
+        printf("ISO: %d\n", iso_index);
+        sleep_counter = 0U;
         delay(200);
     }
 
-    if(g_btn_minus_state && set_iso > 0)
+    if(g_btn_minus_state && iso_index > 0)
     {
-        set_iso--;
-        printf("ISO: %d\n", set_iso);
+        iso_index--;
+        printf("ISO: %d\n", iso_index);
+        sleep_counter = 0U;
         delay(200);
     }
 }
@@ -301,40 +307,40 @@ void make_measurement(uint8_t iso_setting, uint8_t aperture_setting)
 
     printf("Aperture: %f\n", aperture_array[aperture_setting]);
 
-    g_lux = g_veml.readLux(VEML_LUX_CORRECTED);
-    printf("LUX: %ld\n", g_lux);
+    lux = veml.readLux(VEML_LUX_CORRECTED);
+    printf("LUX: %ld\n", lux);
 
-    exposure_value = log10(g_lux * iso_array[iso_setting] / INCIDENT_CALIBRATION) / log10(2);
-    printf("EV: %d\n", exposure_value);
+    ev = log10(lux * iso_array[iso_setting] / INCIDENT_CALIBRATION) / log10(2);
+    printf("EV: %d\n", ev);
 
-    shutter_speed_calculated = (pow(2, exposure_value) / pow(aperture_array[aperture_setting], 2));
+    shutter_calc = (pow(2, ev) / pow(aperture_array[aperture_setting], 2));
 
     for (int i = 0; i < SHUTTER_N; i++) {
         
-        if (shutter_speed_calculated >= shutter_speed_array[i] && shutter_speed_calculated <= shutter_speed_array[i + 1]) 
+        if (shutter_calc >= shutter_array[i] && shutter_calc <= shutter_array[i + 1]) 
         {
         
-        if (abs(shutter_speed_calculated - shutter_speed_array[i]) <= abs(shutter_speed_calculated) - shutter_speed_array[i + 1]) 
+        if (abs(shutter_calc - shutter_array[i]) <= abs(shutter_calc) - shutter_array[i + 1]) 
         {
-            shutter_speed_calculated = shutter_speed_array[i];
+            shutter_calc = shutter_array[i];
         } 
         
         else 
         {
-            shutter_speed_calculated = shutter_speed_array[i + 1];
+            shutter_calc = shutter_array[i + 1];
         }
         
         break;
         
         }
     }
-    if(shutter_speed_calculated > 1)
+    if(shutter_calc > 1)
     {
-        printf("Shutter: 1/%f\n", shutter_speed_calculated);
+        printf("Shutter: 1/%f\n", shutter_calc);
     }
     else 
     {
-        printf("Shutter: %f\n",  1 / shutter_speed_calculated);
+        printf("Shutter: %f\n",  1 / shutter_calc);
     }
     delay(100);
 }
@@ -346,34 +352,34 @@ void sample_text()
 
     display.setCursor(0,0);
     display.print("I:");
-    display.print(iso_array[set_iso]);
+    display.print(iso_array[iso_index]);
 
     display.setCursor(0,8);
     display.print("F:");
-    display.print(aperture_array[set_aperture]);
+    display.print(aperture_array[aperture_index]);
 
     display.setCursor(0,16);
     display.print("L:");
-    display.print(g_lux);
+    display.print(lux);
 
     display.setCursor(0,24);
     display.print("E:");
-    display.print(exposure_value);
+    display.print(ev);
 
     display.setTextSize(2);
     display.setCursor(43,0);
     display.print("Shutter");
     display.setCursor(43,16);
-    if(shutter_speed_calculated > 1)
+    if(shutter_calc > 1)
     {
         display.print("1/");
-        display.print(static_cast<int>(shutter_speed_calculated));
+        display.print(static_cast<int>(shutter_calc));
         display.setTextSize(1);
         display.print("s");
     }
     else 
     {
-        display.print(static_cast<int>(1 / shutter_speed_calculated));
+        display.print(static_cast<int>(1 / shutter_calc));
         display.setTextSize(1);
         display.print("s");
     }
@@ -383,10 +389,26 @@ void sample_text()
     display.clearDisplay();  // Clear the buffer
 }
 
+void sleep()
+{
+    sleep_counter++;
+    delay(10);
+    if(sleep_counter >= 200)
+    {
+        sleep_counter = 0U;
+        printf("Going to sleep...\n");
+        delay(50);
+        display.clearDisplay();
+        display.display();
+        esp_deep_sleep_start();
+    }
+}
+
 void app_main(void)
 {
     init();
     read_btns();
+    make_measurement(iso_index, aperture_index);
 
     while(1)
     {
@@ -395,9 +417,10 @@ void app_main(void)
         sample_text();
         if(g_btn_measure_state)
         {
-            make_measurement(set_iso, set_aperture);
+            make_measurement(iso_index, aperture_index);
+            sleep_counter = 0U;
         }
-        delay(10);
+        sleep();
     }
 }
 
