@@ -3,15 +3,6 @@ Papp Lukács Lóránt
 WOW6MU
 ESP-32c3 based light meter for analog cameras
 
-GND         GND
-LIGHT       3.3V
-VCC         3.3V
-CLK         6
-DIN/MOSI    7
-DC          2
-CE          10
-RST         3
-
 SCLK : SCK, CLK.
 MOSI : SIMO, SDO, DO, DOUT, SO, MTSR.
 MISO : SOMI, SDI, DI, DIN, SI, MRST.
@@ -32,144 +23,7 @@ EV = log10(lux * iso / INCIDENT_CALIBRATION) / log10(2);
 
 double shutterspeed = (pow(2, EV) / pow(aperature, 2));
 https://learn.adafruit.com/adafruit-veml7700/adjusting-for-different-light-levels
-*/
 
-//Defining constants
-//#define APERTURE_N 23     //Number of full and half F-stops
-//#define ISO_N 26        //Number of most common ISO/ASA values
-//#define SHUTTER_N 19    //Number of possible shutter speeds
-//#define INCIDENT_CALIBRATION 330    //330 Calibration constant (C) for incident light meters, see https://en.wikipedia.org/wiki/Light_meter#Calibration_constants
-//#define BTN_MEASURE 4
-
-
-//Defining objects
-//BH1750 lightMeter;      //Light meter sensor using the BH1750 library (might change later)
-//Adafruit_PCD8544 display = Adafruit_PCD8544(6,7,2,5,3);    //LCD initialization (might change later due to I2C)
-//Adafruit_VEML7700 veml = Adafruit_VEML7700();
-//Adafruit_PCD8544 display = Adafruit_PCD8544(6,7,2,10,3);
-
-//Defining variables
-//long lux = 0.0;    //Measured LUX value
-//int8_t ev = 0;
-//uint64_t wait = 0;
-//int16_t shutter_calc = 0;
-//int rotate = 1;
-//
-//double aperture_array[APERTURE_N] = {1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32, 38, 45, 54, 64};
-//double shutter_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
-//int iso_array[ISO_N] = {12, 16, 20, 25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200, 6400};
-
-//void init()
-//{
-//    //Wire.setPins(0, 1);
-//    //Wire.begin();
-//
-//    //lightMeter.begin(BH1750::CONTINUOUS_HIGH_RES_MODE_2);
-//
-//    //lcd.begin(16, 2);
-//    //lcd.print("Shutter:");
-//
-//    //esp_deep_sleep_enable_gpio_wakeup(1 << BTN_MEASURE, ESP_GPIO_WAKEUP_GPIO_HIGH);
-//
-//    //pinMode(BTN_MEASURE, INPUT);
-//}
-
-//void make_measurement(bool init)
-//{
-//    if(digitalRead(BTN_MEASURE) | init)
-//        {
-//            //lux = lightMeter.readLightLevel();
-//            ev = log10(lux * iso_array[25] / INCIDENT_CALIBRATION) / log10(2);
-//            shutter_calc = (pow(2, ev) / pow(aperture_array[4], 2));
-//
-//            for (int i = 0; i < (sizeof(shutter_array) / sizeof(double)) - 1; i++) {
-//                if (shutter_calc >= shutter_array[i] && shutter_calc <= shutter_array[i + 1]) {
-//                if (abs(shutter_calc - shutter_array[i]) <= abs(shutter_calc) - shutter_array[i + 1]) {
-//                    shutter_calc = shutter_array[i];
-//                } else {
-//                    shutter_calc = shutter_array[i + 1];
-//                }
-//                break;
-//                }
-//            }
-//
-//            printf("LUX: %ld; ", lux);
-//            printf("Speed: %d; ", iso_array[25]);
-//            printf("F: %f; ", aperture_array[4]);
-//            printf("Shutter: 1/%d; ", shutter_calc);
-//            printf("EV: %d\n", ev);
-//
-//            wait = 0;
-//
-//            delay(100);
-//
-//            //lcd.setCursor(0, 1);
-//            //lcd.print("1/" + String(shutter_calc));
-//
-//            delay(500);
-//        }
-//}
-//
-//void go_to_sleep(uint16_t sleep)
-//{
-//    wait++;
-//    if(wait >= sleep)
-//    {
-//        printf("Going to sleep...\n");
-//        delay(50);
-//        esp_deep_sleep_start();
-//    }
-//}
-
-//void app_main(void)
-//{
-//    //init();
-//    //make_measurement(true);
-//    Wire.setPins(0, 1);
-//    Wire.begin();
-//
-//    Serial.begin(115200);
-//    display.begin();
-//    display.setContrast(50);
-//    display.clearDisplay();
-//
-//    if (!veml.begin()) {
-//        printf("Failed to communicate with VEML7700 sensor, check wiring?\n");
-//    while (1)
-//    {
-//        delay(1000);
-//    };
-//  }
-//  
-//  veml.setGain(VEML7700_GAIN_1_8); // Adjust gain if needed
-//  veml.setIntegrationTime(VEML7700_IT_25MS); // Adjust integration time if needed
-
-    
-//    while(1)
-//    {
-//        int lux = veml.readLux();
-//        int lux_corr = 6.0135e-13*pow(lux,4)-9.3924e-9*pow(lux,3)+8.1488e-5*pow(lux,2)+1.0023*lux;
-//        printf("Lux_corr: "); 
-//        printf("%d\n", lux_corr);
-//        printf("Lux: ");
-//        printf("%d\n", lux);
-//        delay(1000); // Change delay as needed
-//
-//        display.setTextSize(1);
-//        delay(100);
-//        display.setTextColor(BLACK);
-//        delay(100);
-//        display.setCursor(10,10);
-//        delay(100);
-//        display.println("Welcome!");
-//        printf("Welcome xd\n");
-//        delay(100);
-//        display.display();
-//        delay(100);
-//    }
-//}
-
-/*
 Formulas to calculate values:
 https://www.hackster.io/alankrantas/ardumeter-arduino-incident-light-meter-606f63
 NOTE* Need to switch to I2C communication between ESP32 and LCD!!
@@ -181,6 +35,7 @@ NOTE* Mikrokapcsolok hestorebol - kis sapkákkal kitben pcb-vel stb...
 #include "Arduino.h"
 #include "Print.h"
 #include "esp32-hal-gpio.h"
+#include "esp32-hal.h"
 #include "esp_attr.h"
 #include "esp_err.h"
 #include "hal/gpio_types.h"
@@ -191,6 +46,8 @@ NOTE* Mikrokapcsolok hestorebol - kis sapkákkal kitben pcb-vel stb...
 #include <Adafruit_VEML7700.h>
 #include <pins_arduino.h>
 #include <Adafruit_SSD1306.h>
+#include <iostream>
+#include <iomanip>
 
 extern "C"
 {
@@ -234,6 +91,10 @@ double shutter_calc = 0U;
 RTC_DATA_ATTR uint8_t aperture_index = 6U;
 RTC_DATA_ATTR uint8_t iso_index = 9U;
 uint64_t sleep_counter = 0U;
+RTC_DATA_ATTR bool setting_switch = false;
+bool is_inverted = false;
+uint16_t btn_press_start_time = 0U;
+char floatStr[6];
 
 double aperture_array[APERTURE_N] = {1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32, 38, 45, 54, 64};
 double shutter_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
@@ -284,20 +145,60 @@ void read_btns()
 
 void settings()
 {
-    if(g_btn_plus_state && iso_index < ISO_N - 1)
+    if(setting_switch)
     {
-        iso_index++;
-        printf("ISO: %d\n", iso_index);
-        sleep_counter = 0U;
-        delay(200);
+        if(g_btn_plus_state && iso_index < ISO_N - 1)
+        {
+            iso_index++;
+            printf("ISO: %d\n", iso_index);
+            sleep_counter = 0U;
+            delay(200);
+        }
+
+        if(g_btn_minus_state && iso_index > 0)
+        {
+            iso_index--;
+            printf("ISO: %d\n", iso_index);
+            sleep_counter = 0U;
+            delay(200);
+        }
+    }
+    else
+    {
+        if(g_btn_plus_state && aperture_index < APERTURE_N - 1)
+        {
+            aperture_index++;
+            printf("Aperture: %d\n", aperture_index);
+            sleep_counter = 0U;
+            delay(200);
+        }
+
+        if(g_btn_minus_state && aperture_index > 0)
+        {
+            aperture_index--;
+            printf("Aperture: %d\n", aperture_index);
+            sleep_counter = 0U;
+            delay(200);
+        }
     }
 
-    if(g_btn_minus_state && iso_index > 0)
+    if(g_btn_measure_state)
     {
-        iso_index--;
-        printf("ISO: %d\n", iso_index);
-        sleep_counter = 0U;
-        delay(200);
+        if(btn_press_start_time == 0)
+        {
+            btn_press_start_time = millis();
+            is_inverted = false;
+        }
+        else if (!is_inverted && millis() - btn_press_start_time >= 3000)
+        {
+            setting_switch = !setting_switch;
+            is_inverted = true;
+            printf("Inverted switch!\n");
+        }
+    }
+    else
+    {
+        btn_press_start_time = 0U;
     }
 }
 
@@ -345,19 +246,38 @@ void make_measurement(uint8_t iso_setting, uint8_t aperture_setting)
     delay(100);
 }
 
-void sample_text()
+void to_oled()
 {
     display.setTextSize(1);
+
+    if(setting_switch)
+    {
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.setCursor(0,0);
+        display.print("I:");
+        display.print(iso_array[iso_index]);
+
+        display.setTextColor(SSD1306_WHITE);
+        display.setCursor(0,8);
+        display.print("f/");
+        dtostrf(aperture_array[aperture_index], 4, 1, floatStr);
+        display.print(floatStr);
+    }
+    else
+    {
+        display.setTextColor(SSD1306_WHITE);
+        display.setCursor(0,0);
+        display.print("I:");
+        display.print(iso_array[iso_index]);
+
+        display.setTextColor(SSD1306_BLACK, SSD1306_WHITE);
+        display.setCursor(0,8);
+        display.print("f/");
+        dtostrf(aperture_array[aperture_index], 4, 1, floatStr);
+        display.print(floatStr);
+    }
+
     display.setTextColor(SSD1306_WHITE);
-
-    display.setCursor(0,0);
-    display.print("I:");
-    display.print(iso_array[iso_index]);
-
-    display.setCursor(0,8);
-    display.print("F:");
-    display.print(aperture_array[aperture_index]);
-
     display.setCursor(0,16);
     display.print("L:");
     display.print(lux);
@@ -414,7 +334,7 @@ void app_main(void)
     {
         read_btns();
         settings();
-        sample_text();
+        to_oled();
         if(g_btn_measure_state)
         {
             make_measurement(iso_index, aperture_index);
