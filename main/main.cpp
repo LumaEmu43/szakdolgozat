@@ -69,12 +69,13 @@ extern "C"
 #define BTN_MEASURE 4
 #define BTN_PLUS    2
 #define BTN_MINUS   3
+#define PWR_BJT   10
 #define SDA 1
 #define SCL 0
 #define APERTURE_N 23
 #define SHUTTER_N 19
 #define ISO_N 26
-#define INCIDENT_CALIBRATION 330
+#define INCIDENT_CALIBRATION 250
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 32
 
@@ -108,6 +109,9 @@ void init()
     pinMode(BTN_MEASURE, INPUT_PULLDOWN);
     pinMode(BTN_PLUS, INPUT_PULLDOWN);
     pinMode(BTN_MINUS, INPUT_PULLDOWN);
+    pinMode(PWR_BJT, GPIO_MODE_OUTPUT_OD);
+    digitalWrite(PWR_BJT, HIGH);
+    delay(50);
 
     printf("Setting up the SDA: %d, and the SCL: %d pins.\n", SDA, SCL);
     Wire.begin(1, 0);
@@ -211,7 +215,8 @@ void make_measurement(uint8_t iso_setting, uint8_t aperture_setting)
     lux = veml.readLux(VEML_LUX_CORRECTED);
     printf("LUX: %ld\n", lux);
 
-    ev = log10(lux * iso_array[iso_setting] / INCIDENT_CALIBRATION) / log10(2);
+    //ev = log10(lux * iso_array[iso_setting] / INCIDENT_CALIBRATION) / log10(2);
+    ev = log2((lux * iso_array[iso_setting])/INCIDENT_CALIBRATION);
     printf("EV: %d\n", ev);
 
     shutter_calc = (pow(2, ev) / pow(aperture_array[aperture_setting], 2));
@@ -318,6 +323,7 @@ void sleep()
         sleep_counter = 0U;
         printf("Going to sleep...\n");
         delay(50);
+        digitalWrite(PWR_BJT, LOW);
         display.clearDisplay();
         display.display();
         esp_deep_sleep_start();
