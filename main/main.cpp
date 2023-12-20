@@ -2,34 +2,10 @@
 Papp Lukács Lóránt
 WOW6MU
 ESP-32c3 based light meter for analog cameras
+*/
 
-SCLK : SCK, CLK.
-MOSI : SIMO, SDO, DO, DOUT, SO, MTSR.
-MISO : SOMI, SDI, DI, DIN, SI, MRST.
-SS : nCS, CS, CSB, CSN, nSS, STE, SYNC. 
-
-Available options in most cameras:
-
-Full and half stops:
-1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32, 38, 45, 54, 64
-
-Most common film speeds (ASA/ISO):
-12, 16, 20, 25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200, 6400
-
-Shutter speeds in seconds:
-1, 1/2, 1/4, 1/8, 1/15, 1/30, 1/60, 1/125, 1/250, 1/500, 1/1000, 1/2000, 1/4000, 1/8000
-
-EV = log10(lux * iso / INCIDENT_CALIBRATION) / log10(2);
-
-double shutterspeed = (pow(2, EV) / pow(aperature, 2));
-https://learn.adafruit.com/adafruit-veml7700/adjusting-for-different-light-levels
-
-Formulas to calculate values:
-https://www.hackster.io/alankrantas/ardumeter-arduino-incident-light-meter-606f63
-NOTE* Need to switch to I2C communication between ESP32 and LCD!!
-NOTE* Hardware upgrade for better measurement: BH1745
-NOTE* Potential display Grafikus LCD kijelző 84x48 - Nokia 5110
-NOTE* Mikrokapcsolok hestorebol - kis sapkákkal kitben pcb-vel stb...
+/*
+Includes
 */
 
 #include "Arduino.h"
@@ -65,41 +41,57 @@ extern "C"
     void app_main(void);
 }
 
-//Defining values
+/*
+Defines
+*/
+
 #define BTN_MEASURE 4
-#define BTN_PLUS    2
-#define BTN_MINUS   3
-#define PWR_BJT   10
+#define BTN_PLUS 2
+#define BTN_MINUS 3
+
+#define PWR_BJT 10
 #define SDA 1
 #define SCL 0
+
 #define APERTURE_N 23
 #define SHUTTER_N 19
 #define ISO_N 26
-#define INCIDENT_CALIBRATION 250
-#define SCREEN_WIDTH 128
-#define SCREEN_HEIGHT 32
 
-//Variables
+#define INCIDENT_CALIBRATION 250
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+/*
+Variables
+*/
+
 Adafruit_VEML7700 veml = Adafruit_VEML7700();
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
 
 long lux = 0U;
+double shutter_calc = 0U;
+
+RTC_DATA_ATTR uint8_t aperture_index = 6U;
+RTC_DATA_ATTR uint8_t iso_index = 9U;
+RTC_DATA_ATTR bool setting_switch = false;
+bool is_inverted = false;
+char floatStr[6];
+
 uint8_t g_btn_measure_state = 0U;
 uint8_t g_btn_plus_state = 0U;
 uint8_t g_btn_minus_state = 0U;
-int16_t ev = 0U;
-double shutter_calc = 0U;
-RTC_DATA_ATTR uint8_t aperture_index = 6U;
-RTC_DATA_ATTR uint8_t iso_index = 9U;
-uint64_t sleep_counter = 0U;
-RTC_DATA_ATTR bool setting_switch = false;
-bool is_inverted = false;
+uint16_t ev = 0U;
 uint16_t btn_press_start_time = 0U;
-char floatStr[6];
+uint64_t sleep_counter = 0U;
 
 double aperture_array[APERTURE_N] = {1.4, 1.7, 2, 2.4, 2.8, 3.3, 4, 4.8, 5.6, 6.7, 8, 9.5, 11, 13, 16, 19, 22, 27, 32, 38, 45, 54, 64};
 double shutter_array[SHUTTER_N] = {-60, -30, -15, -8, -4, -2, -1, 2, 4, 8, 15, 30, 60, 125, 250, 500, 1000, 2000, 4000};
 uint16_t iso_array[ISO_N] = {12, 16, 20, 25, 32, 40, 50, 64, 80, 100, 125, 160, 200, 250, 320, 400, 500, 640, 800, 1000, 1250, 1600, 2000, 2500, 3200, 6400};
+
+/*
+Functions
+*/
 
 void init()
 {
@@ -215,8 +207,8 @@ void make_measurement(uint8_t iso_setting, uint8_t aperture_setting)
     lux = veml.readLux(VEML_LUX_CORRECTED);
     printf("LUX: %ld\n", lux);
 
-    //ev = log10(lux * iso_array[iso_setting] / INCIDENT_CALIBRATION) / log10(2);
     ev = log2((lux * iso_array[iso_setting])/INCIDENT_CALIBRATION);
+
     printf("EV: %d\n", ev);
 
     shutter_calc = (pow(2, ev) / pow(aperture_array[aperture_setting], 2));
@@ -225,19 +217,15 @@ void make_measurement(uint8_t iso_setting, uint8_t aperture_setting)
         
         if (shutter_calc >= shutter_array[i] && shutter_calc <= shutter_array[i + 1]) 
         {
-        
         if (abs(shutter_calc - shutter_array[i]) <= abs(shutter_calc) - shutter_array[i + 1]) 
         {
             shutter_calc = shutter_array[i];
         } 
-        
         else 
         {
             shutter_calc = shutter_array[i + 1];
         }
-        
         break;
-        
         }
     }
     if(shutter_calc > 1)
@@ -310,8 +298,8 @@ void to_oled()
     }
 
     display.display();
-    delay(100);  // Pause for 2 seconds
-    display.clearDisplay();  // Clear the buffer
+    delay(100);
+    display.clearDisplay();
 }
 
 void sleep()
@@ -329,6 +317,11 @@ void sleep()
         esp_deep_sleep_start();
     }
 }
+
+
+/*
+MAIN PROGRAM
+*/
 
 void app_main(void)
 {
@@ -349,10 +342,3 @@ void app_main(void)
         sleep();
     }
 }
-
-/*
-TO DO:
-2 nyomógombot berakni h lehessen állítani az iso-t és az aperturet :D
-hestore várom a rendelést
-iso set overflow fix!!!! a button measure funkcioban
-*/
